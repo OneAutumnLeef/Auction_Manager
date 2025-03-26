@@ -370,5 +370,5 @@ For best performance:
 <div style="text-align: center; margin-top: 50px; color: #6b7280; font-size: 14px;">
   <p>Made with ❤️ by Deraj Yojith<br>
   Organized by E-Cell SriCity<br>
-  © 2023 IPL Auction Manager. All rights reserved.</p>
+  © 2025 IPL Auction Manager. All rights reserved.</p>
 </div>
