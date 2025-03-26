@@ -108,7 +108,7 @@ export function Footer() {
             </div>
             <div className="h-20 w-20 flex items-center justify-center">
               <img 
-                src="/logo_ecell.png" 
+                src="https://images.prismic.io/derajportfolio/Z-R2_XdAxsiBv8t0_logo_ecell.png?auto=format,compress" 
                 alt="E-Cell Logo" 
                 className="h-full w-full object-contain"
               />

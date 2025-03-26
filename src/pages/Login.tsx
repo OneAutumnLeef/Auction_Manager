@@ -30,7 +30,7 @@ export default function Login() {
             <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg blur-lg opacity-30"></div>
             <div className="relative">
               <img 
-                src="/ipl2.png" 
+                src="https://images.prismic.io/derajportfolio/Z-R2_HdAxsiBv8tz_ipl2.png?auto=format,compress" 
                 alt="IPL Auction" 
                 className="rounded-lg shadow-2xl border border-gray-700/40"
               />

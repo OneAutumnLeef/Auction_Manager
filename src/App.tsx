@@ -12,6 +12,7 @@ import { Button } from './components/ui/Button';
 import { RefreshCw } from 'lucide-react';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
+import { Analytics } from "@vercel/analytics/react"
 
 const queryClient = new QueryClient();
 
@@ -139,8 +140,8 @@ function App() {
               </Routes>
             </div>
           </main>
-          {/* Footer will always be at the bottom */}
           <Footer />
+          <Analytics />
         </div>
       </Router>
     </QueryClientProvider>
