@@ -49,7 +49,7 @@ export default function AuctioneerDashboard() {
     const loadDefaultData = async () => {
       try {
         // Only load default data if no players exist yet
-        if (players.length === 3) {
+        if (true) {
           // Fetch the CSV file
           const response = await fetch('./Test_Cleaned_Updated.csv');
           const csvText = await response.text();
