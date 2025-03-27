@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Player } from '../types';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { markPlayerSold as apiMarkSold, markPlayerUnsold as apiMarkUnsold } from '../services/api';
 
 interface SoldPlayer {
   playerId: string;
@@ -59,7 +60,7 @@ export const useAuctionStore = create<AuctionStore>()(
       setCurrentPlayer: (player) => set({ currentPlayer: player }),
       setAuctionMode: (isActive) => set({ isAuctionMode: isActive }),
       
-      markPlayerSold: (playerId, teamId, amount) => set((state) => {
+      markPlayerSold: (playerId, teamId, amount) => set(async (state) => {
         // Create sold player record
         const soldPlayer: SoldPlayer = {
           playerId,
@@ -67,6 +68,18 @@ export const useAuctionStore = create<AuctionStore>()(
           amount,
           soldAt: new Date()
         };
+        
+        // Update the API (do this asynchronously)
+        try {
+          apiMarkSold(playerId, teamId, amount)
+            .then(data => {
+              // Optionally update state again when API succeeds
+              console.log("Player marked as sold on server");
+            })
+            .catch(err => console.error("Failed to mark player as sold on server:", err));
+        } catch (error) {
+          console.error("Error calling markSold API:", error);
+        }
         
         // Remove from unsold if it was there before
         const updatedUnsoldPlayers = state.unsoldPlayers.filter(
@@ -88,9 +101,6 @@ export const useAuctionStore = create<AuctionStore>()(
       }),
       
       markPlayerUnsold: (playerId, reason) => set((state) => {
-        // Check if player is already in unsoldPlayers to prevent duplicates
-        const playerAlreadyUnsold = state.unsoldPlayers.some(p => p.playerId === playerId);
-        
         // Create unsold player record
         const unsoldPlayer: UnsoldPlayer = {
           playerId,
@@ -98,22 +108,37 @@ export const useAuctionStore = create<AuctionStore>()(
           markedAt: new Date()
         };
         
-        // Remove from sold if it was there before
+        // Update the API (do this asynchronously)
+        try {
+          apiMarkUnsold(playerId, reason)
+            .then(data => {
+              console.log("Player marked as unsold on server");
+            })
+            .catch(err => console.error("Failed to mark player as unsold on server:", err));
+        } catch (error) {
+          console.error("Error calling markUnsold API:", error);
+        }
+        
+        // Remove from sold players if it was there
         const updatedSoldPlayers = state.soldPlayers.filter(
           p => p.playerId !== playerId
+        );
+        
+        // Check if already in unsold list
+        const isAlreadyUnsold = state.unsoldPlayers.some(
+          p => p.playerId === playerId
         );
         
         // Update players array to mark as unsold
         const updatedPlayers = state.players.map(player => 
           player.id === playerId 
-            ? { ...player, isUnsold: true, isSold: false, soldTo: undefined, soldAmount: undefined } 
+            ? { ...player, isSold: false, isUnsold: true, soldTo: undefined, soldAmount: undefined } 
             : player
         );
         
-        return { 
-          // Only add to unsoldPlayers if not already there
-          unsoldPlayers: playerAlreadyUnsold 
-            ? state.unsoldPlayers
+        return {
+          unsoldPlayers: isAlreadyUnsold 
+            ? state.unsoldPlayers 
             : [...state.unsoldPlayers, unsoldPlayer],
           soldPlayers: updatedSoldPlayers,
           players: updatedPlayers
