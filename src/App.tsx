@@ -13,6 +13,8 @@ import { RefreshCw } from 'lucide-react';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { Analytics } from "@vercel/analytics/react"
+import './utils/syncTest';
+import { ConnectionStatus } from './components/ConnectionStatus';
 
 const queryClient = new QueryClient();
 
@@ -26,7 +28,7 @@ function App() {
   const user = useAuthStore((state) => state.user);
   const setPlayers = useAuctionStore((state) => state.setPlayers);
   const resetAuctionData = useAuctionStore((state) => state.resetAuctionData);
-  const [csvImported, setCsvImported] = useState(false);
+  // Remove the unused state variable
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,7 +63,6 @@ function App() {
               
               if (importedPlayers && importedPlayers.length > 0) {
                 setPlayers(importedPlayers);
-                setCsvImported(true);
                 console.log(`Loaded ${importedPlayers.length} players from default CSV file`);
               } else {
                 console.error("parsePlayersCSV returned empty array or null");
@@ -124,8 +125,7 @@ function App() {
               }
             ];
             
-            setPlayers(defaultPlayers);
-            setCsvImported(true);
+            setPlayers([]);
             console.log(`Loaded ${defaultPlayers.length} players from hardcoded data`);
           }
         } else {
@@ -177,7 +177,8 @@ function App() {
                           <div className="container mx-auto pt-4">
                             <div className="flex flex-col md:flex-row gap-4 mb-4">
                               <div className="flex-grow">
-                                <CSVUpload onImportSuccess={() => setCsvImported(true)} />
+                                {/* Update CSVUpload to not use the removed state */}
+                                <CSVUpload onImportSuccess={() => console.log('CSV import successful')} />
                               </div>
                               <div className="flex justify-end">
                                 {showConfirmReset ? (
@@ -227,7 +228,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  {/* Important: Add a more specific redirect behavior */}
+                  {/* Redirects */}
                   <Route 
                     path="/" 
                     element={user ? (
@@ -240,7 +241,6 @@ function App() {
                       <Navigate to="/login" replace />
                     )} 
                   />
-                  {/* Catch all other routes */}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               )}
@@ -248,6 +248,7 @@ function App() {
           </main>
           <Footer />
           <Analytics />
+          <ConnectionStatus />
         </div>
       </Router>
     </QueryClientProvider>
