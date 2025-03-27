@@ -6,9 +6,10 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1.js" },
-    { "src": "/Test_Cleaned_Updated.csv", "dest": "/public/Test_Cleaned_Updated.csv" },
     { "src": "/assets/(.*)", "dest": "/dist/assets/$1" },
-    { "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|json|svg))", "dest": "/dist/$1" },
-    { "src": "/(.*)", "dest": "/dist/index.html" }
+    { "src": "/Test_Cleaned_Updated.csv", "dest": "/public/Test_Cleaned_Updated.csv" },
+    { "src": "/(.*)\\.(.+)", "dest": "/dist/$1.$2" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/dist/index.html", "status": 200 }
   ]
 }
