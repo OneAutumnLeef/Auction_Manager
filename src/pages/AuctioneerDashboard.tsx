@@ -48,8 +48,8 @@ export default function AuctioneerDashboard() {
   useEffect(() => {
     const loadDefaultData = async () => {
       try {
-        // Only load default data if no players exist yet
-        if (players.length === 0) {
+        // Only load default data if no players exist yet or if sample is loaded
+        if (players.length === 0 || players.length === 3) {
           // Fetch the CSV file with the correct public path
           const response = await fetch('/Test_Cleaned_Updated.csv');
           
