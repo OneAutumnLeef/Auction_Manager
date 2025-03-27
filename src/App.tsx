@@ -47,28 +47,86 @@ function App() {
             }
             
             const csvText = await response.text();
-            const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
-            const importedPlayers = await parsePlayersCSV(csvFile);
             
-            if (importedPlayers.length > 0) {
-              setPlayers(importedPlayers);
-              setCsvImported(true);
-              console.log(`Loaded ${importedPlayers.length} players from default CSV file`);
-            } else {
-              throw new Error('CSV file parsed but no players found');
+            // Debug the CSV content to see what we're getting
+            console.log("CSV content length:", csvText.length);
+            console.log("CSV first 100 chars:", csvText.substring(0, 100));
+            
+            // Create a file object from the CSV text
+            const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
+            
+            try {
+              // Add extra error handling around the parsing step
+              const importedPlayers = await parsePlayersCSV(csvFile);
+              
+              if (importedPlayers && importedPlayers.length > 0) {
+                setPlayers(importedPlayers);
+                setCsvImported(true);
+                console.log(`Loaded ${importedPlayers.length} players from default CSV file`);
+              } else {
+                console.error("parsePlayersCSV returned empty array or null");
+                throw new Error('CSV file parsed but no players found');
+              }
+            } catch (parseError) {
+              console.error('Error parsing CSV content:', parseError);
+              throw parseError; // Re-throw to be caught by the outer catch
             }
           } catch (csvError) {
             console.error('Error loading from CSV file:', csvError);
             
-            // Fallback to loading from sample data
-            const { samplePlayers } = await import('./data/players');
-            if (samplePlayers.length > 0) {
-              setPlayers(samplePlayers);
-              setCsvImported(true);
-              console.log(`Loaded ${samplePlayers.length} players from sample data`);
-            } else {
-              throw new Error('No sample players available');
-            }
+            // Load hardcoded sample data for reliability
+            // This ensures the app works even if CSV parsing completely fails
+            const defaultPlayers = [
+              {
+                id: '1',
+                name: 'Virat Kohli',
+                role: 'Batsman',
+                rating: 9.8,
+                basePrice: 20000000,
+                category: 'A',
+                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/164.png'
+              },
+              {
+                id: '2',
+                name: 'Rohit Sharma',
+                role: 'Batsman',
+                rating: 9.7,
+                basePrice: 20000000,
+                category: 'A',
+                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/107.png'
+              },
+              {
+                id: '3',
+                name: 'Jasprit Bumrah',
+                role: 'Bowler',
+                rating: 9.5,
+                basePrice: 20000000,
+                category: 'A',
+                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/1124.png'
+              },
+              {
+                id: '4',
+                name: 'MS Dhoni',
+                role: 'Wicket-keeper',
+                rating: 9.0,
+                basePrice: 20000000,
+                category: 'A',
+                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/28.png'
+              },
+              {
+                id: '5',
+                name: 'Ravindra Jadeja',
+                role: 'All-rounder',
+                rating: 8.9,
+                basePrice: 20000000,
+                category: 'A',
+                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/9.png'
+              }
+            ];
+            
+            setPlayers(defaultPlayers);
+            setCsvImported(true);
+            console.log(`Loaded ${defaultPlayers.length} players from hardcoded data`);
           }
         } else {
           console.log(`Using ${existingPlayers.length} players from previous session`);
