@@ -84,7 +84,7 @@ function App() {
                 rating: 9.8,
                 basePrice: 20000000,
                 category: 'A',
-                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/164.png'
+                // imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/164.png'
               },
               {
                 id: '2',
@@ -93,7 +93,7 @@ function App() {
                 rating: 9.7,
                 basePrice: 20000000,
                 category: 'A',
-                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/107.png'
+                // imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/107.png'
               },
               {
                 id: '3',
@@ -102,7 +102,7 @@ function App() {
                 rating: 9.5,
                 basePrice: 20000000,
                 category: 'A',
-                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/1124.png'
+                // imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/1124.png'
               },
               {
                 id: '4',
@@ -111,7 +111,7 @@ function App() {
                 rating: 9.0,
                 basePrice: 20000000,
                 category: 'A',
-                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/28.png'
+                // imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/28.png'
               },
               {
                 id: '5',
@@ -120,7 +120,7 @@ function App() {
                 rating: 8.9,
                 basePrice: 20000000,
                 category: 'A',
-                imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/9.png'
+                // imageUrl: 'https://resources.pulse.icc-cricket.com/players/284/9.png'
               }
             ];
             
