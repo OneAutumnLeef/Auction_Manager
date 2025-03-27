@@ -49,19 +49,29 @@ export default function AuctioneerDashboard() {
     const loadDefaultData = async () => {
       try {
         // Only load default data if no players exist yet
-        if (true) {
-          // Fetch the CSV file
-          const response = await fetch('./Test_Cleaned_Updated.csv');
-          const csvText = await response.text();
+        if (players.length === 0) {
+          // Fetch the CSV file with the correct public path
+          const response = await fetch('/Test_Cleaned_Updated.csv');
           
-          // Convert the text to a File object
-          const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
-          
-          // Parse the CSV file
-          const importedPlayers = await parsePlayersCSV(csvFile);
-          
-          // Set the players in the store
-          setPlayers(importedPlayers);
+          if (!response.ok) {
+            console.error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
+            // Try alternate path as fallback
+            const fallbackResponse = await fetch('./Test_Cleaned_Updated.csv');
+            
+            if (!fallbackResponse.ok) {
+              throw new Error(`Failed to load player data from all paths`);
+            }
+            
+            const csvText = await fallbackResponse.text();
+            const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
+            const importedPlayers = await parsePlayersCSV(csvFile);
+            setPlayers(importedPlayers);
+          } else {
+            const csvText = await response.text();
+            const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
+            const importedPlayers = await parsePlayersCSV(csvFile);
+            setPlayers(importedPlayers);
+          }
           
           // Show notification
           setShowingDefaultDataNotification(true);
@@ -80,6 +90,30 @@ export default function AuctioneerDashboard() {
         }
       } catch (error) {
         console.error('Failed to load default player data:', error);
+        
+        // As a last resort, try to load the CSV directly from the code
+        try {
+          // Load the CSV content directly (ensure this CSV is copied from Test_Cleaned_Updated.csv)
+          const csvContent = `Player Name,Role,Rating,Base Price (in Cr),Category,Photo Link
+Shikhar Dhawan,Batter,8.1,2,A,https://imgs.search.brave.com/JN6V6v1UwPiIwnqzAt2lwHKT_q7teu9CGfTZ4LIxiUY/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTI0/MTc5NTQ0NS9waG90/by9iaXJtaW5naGFt/LWVuZ2xhbmQtc2hp/a2hhci1kaGF3YW4t/b2YtaW5kaWEtcG9z/ZXMtZHVyaW5nLWEt/cG9ydHJhaXQtc2Vz/c2lvbi1hdC10aGUt/aHlhdHQtaG90ZWwu/anBnP3M9NjEyeDYx/MiZ3PTAmaz0yMCZj/PTdnckVSUjVKUWhu/Zmc1WFhrMmVyQTBz/emZCY3VGZ3lXSnRE/T1B6LU0tc3c9
+Suryakumar Yadav,Batter,8.7,2,A,https://imgs.search.brave.com/-kbkjPHNpHg4WqhcZE9LsSg_yRNhhVwmdEuJpDNDErA/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTQw/Njk2NTE0OS9waG90/by9zb3V0aGFtcHRv/bi1lbmdsYW5kLXN1/cnlha3VtYXIteWFk/YXYtb2YtaW5kaWEt/cG9zZXMtZHVyaW5n/LWEtcG9ydHJhaXQt/c2Vzc2lvbi1hdC10/aGUtcm9zZS5qcGc_/cz02MTJ4NjEyJnc9/MCZrPTIwJmM9YXdv/X1ZERTlwelY4d2Vh/RXlfX2thalgwNFo0/YU9KV1hUaGgxMEJy/Mjhrcz0
+Virat Kohli,Batter,9.8,2,A,https://imgs.search.brave.com/HEWpYSbVuGVDT07VK1E6kQDDru52R6cZ2kq9-1XDesk/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJzLmNvbS9p/bWFnZXMvaGQvaW5k/aWEtY3JpY2tldC10/ZWFtLXZpcmF0LWtv/aGxpLWhkLTZyb3Nx/eTB5OTZxOHJzM28u/anBn
+Rohit Sharma,Batter,9.7,2,A,https://imgs.search.brave.com/AdMpvduWMd2WzyEu2GVdP87pwOWh4Qde6JfDOSnRWQw/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTUy/MTI3OTM5MC9waG90/by9yb2hpdC1zaGFy/bWEtb2YtaW5kaWEt/cG9zZXMtZm9yLWEt/cG9ydHJhaXQtYXQt/d2luZHNvci1wYXJr/LXJvc2VhdS1kb21p/bmljYS1vbi1qdWx5/LTEwLTIwMjMuanBn/P3M9NjEyeDYxMiZ3/PTAmaz0yMCZjPWJI/dkZZT0RxNk1Uc251/QUZ5aUs2azk4MnBy/Ym5WUUtQRlM3ckF5/cU1SQVk9`;
+          
+          const csvFile = new File([csvContent], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
+          const importedPlayers = await parsePlayersCSV(csvFile);
+          setPlayers(importedPlayers);
+          
+          // Show notification
+          setShowingDefaultDataNotification(true);
+          
+          // Hide notification after 5 seconds
+          setTimeout(() => {
+            setShowingDefaultDataNotification(false);
+          }, 5000);
+        } catch (fallbackError) {
+          console.error('Even fallback data loading failed:', fallbackError);
+        }
       } finally {
         // Finish loading regardless of outcome
         setPageLoaded(true);
