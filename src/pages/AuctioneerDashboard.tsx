@@ -15,7 +15,6 @@ import {
 import { CSVUpload } from '../components/CSVUpload';
 // import { UnsoldPlayersUpload } from '../components/UnsoldPlayersUpload';
 import { convertSoldPlayersToCSV, convertUnsoldPlayersToCSV, downloadCSV } from '../lib/csvExport';
-import { parsePlayersCSV } from '../lib/csvImport';
 
 export default function AuctioneerDashboard() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -27,7 +26,8 @@ export default function AuctioneerDashboard() {
   const [showUpload, setShowUpload] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Remove these loading states since they're handled at App level
   const [showingRestoreNotification, setShowingRestoreNotification] = useState(false);
   const [showingDefaultDataNotification, setShowingDefaultDataNotification] = useState(false);
 
@@ -45,55 +45,15 @@ export default function AuctioneerDashboard() {
     setPlayers
   } = useAuctionStore();
 
+  // Simple effect to set pageLoaded to true 
   useEffect(() => {
-    const loadDefaultData = async () => {
-      try {
-        // Only load default data if no players exist yet
-        if (players.length === 0) {
-          // Load directly from the local file in the project root
-          const response = await fetch('/Test_Cleaned_Updated.csv');
-          
-          if (!response.ok) {
-            console.error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
-            throw new Error('Failed to load player data');
-          }
-          
-          const csvText = await response.text();
-          const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
-          const importedPlayers = await parsePlayersCSV(csvFile);
-          setPlayers(importedPlayers);
-          
-          // Show notification
-          setShowingDefaultDataNotification(true);
-          
-          // Hide notification after 5 seconds
-          setTimeout(() => {
-            setShowingDefaultDataNotification(false);
-          }, 5000);
-        } else {
-          // If players exist, show restore notification
-          setShowingRestoreNotification(true);
-          // Hide notification after 5 seconds
-          setTimeout(() => {
-            setShowingRestoreNotification(false);
-          }, 5000);
-        }
-      } catch (error) {
-        console.error('Failed to load default player data:', error);
-      } finally {
-        // Finish loading regardless of outcome
-        setPageLoaded(true);
-        setIsLoading(false);
-      }
-    };
-
-    // Delay for better user experience
+    // Set pageLoaded to true after a short delay for smoother transitions
     const timer = setTimeout(() => {
-      loadDefaultData();
-    }, 500);
+      setPageLoaded(true);
+    }, 300);
     
     return () => clearTimeout(timer);
-  }, [players.length, setPlayers]);
+  }, []);
 
   const handleClearData = () => {
     setShowConfirmReset(true);
@@ -236,6 +196,9 @@ export default function AuctioneerDashboard() {
     return `₹${(amount / 10000000).toFixed(2)} Cr`;
   };
 
+  // Get loading state from the store to know when App.tsx has finished loading
+  const isLoading = players.length === 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-ipl-blue-900 to-gray-900">
       {/* Background cricket pattern overlay */}
@@ -250,46 +213,6 @@ export default function AuctioneerDashboard() {
         </div>
       ) : (
         <div className="relative px-4 sm:px-6 lg:px-8 py-6 max-w-8xl mx-auto">
-          {showingRestoreNotification && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mb-4 bg-green-900/50 text-green-300 p-3 rounded-lg border border-green-700/50 flex items-center"
-            >
-              <div className="p-1 bg-green-800/50 rounded-full mr-2">
-                <Check size={16} />
-              </div>
-              <p>Restored auction data from your last session</p>
-              <button 
-                className="ml-auto text-green-400 hover:text-white"
-                onClick={() => setShowingRestoreNotification(false)}
-              >
-                <X size={16} />
-              </button>
-            </motion.div>
-          )}
-          
-          {showingDefaultDataNotification && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mb-4 bg-blue-900/50 text-blue-300 p-3 rounded-lg border border-blue-700/50 flex items-center"
-            >
-              <div className="p-1 bg-blue-800/50 rounded-full mr-2">
-                <Check size={16} />
-              </div>
-              <p>Loaded {players.length} players from Test_Cleaned_Updated.csv</p>
-              <button 
-                className="ml-auto text-blue-400 hover:text-white"
-                onClick={() => setShowingDefaultDataNotification(false)}
-              >
-                <X size={16} />
-              </button>
-            </motion.div>
-          )}
-          
           {!isAuctionMode && (
             <>
               {/* Dashboard Header with Stats */}
