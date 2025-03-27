@@ -38,25 +38,44 @@ function App() {
         
         // Only load default data if no persisted players exist
         if (existingPlayers.length === 0) {
-          // Load directly from the default CSV file in the project root
-          const response = await fetch('/Test_Cleaned_Updated.csv');
-          
-          if (!response.ok) {
-            console.error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
-            throw new Error('Failed to load default player data');
+          try {
+            // First try loading from public folder
+            const response = await fetch('/Test_Cleaned_Updated.csv');
+            
+            if (!response.ok) {
+              throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
+            }
+            
+            const csvText = await response.text();
+            const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
+            const importedPlayers = await parsePlayersCSV(csvFile);
+            
+            if (importedPlayers.length > 0) {
+              setPlayers(importedPlayers);
+              setCsvImported(true);
+              console.log(`Loaded ${importedPlayers.length} players from default CSV file`);
+            } else {
+              throw new Error('CSV file parsed but no players found');
+            }
+          } catch (csvError) {
+            console.error('Error loading from CSV file:', csvError);
+            
+            // Fallback to loading from sample data
+            const { samplePlayers } = await import('./data/players');
+            if (samplePlayers.length > 0) {
+              setPlayers(samplePlayers);
+              setCsvImported(true);
+              console.log(`Loaded ${samplePlayers.length} players from sample data`);
+            } else {
+              throw new Error('No sample players available');
+            }
           }
-          
-          const csvText = await response.text();
-          const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
-          const importedPlayers = await parsePlayersCSV(csvFile);
-          
-          setPlayers(importedPlayers);
-          setCsvImported(true);
-          console.log(`Loaded ${importedPlayers.length} players from default CSV file`);
+        } else {
+          console.log(`Using ${existingPlayers.length} players from previous session`);
         }
       } catch (error) {
-        console.error('Error loading default player data:', error);
-        // If loading fails, initialize with empty array
+        console.error('Error loading player data:', error);
+        // If all loading methods fail, initialize with empty array
         setPlayers([]);
       } finally {
         setIsLoading(false);
