@@ -24,15 +24,32 @@ export function CSVUpload({ onImportSuccess }: CSVUploadProps) {
     setSuccess(null);
 
     try {
+      console.log(`Processing CSV file: ${file.name} (${file.size} bytes)`);
+      // Read file content
+      const text = await file.text();
+      console.log(`CSV content length: ${text.length} bytes`);
+      
+      if (text.length === 0) {
+        throw new Error('CSV file is empty');
+      }
+      
+      // Parse the CSV file
       const players = await parsePlayersCSV(file);
+      
+      if (!players || players.length === 0) {
+        throw new Error('No players found in CSV file');
+      }
+      
+      console.log(`Successfully parsed ${players.length} players from CSV`);
       setPlayers(players);
       setSuccess(`Imported ${players.length} players`);
+      
       if (onImportSuccess) {
         onImportSuccess();
       }
     } catch (err) {
-      setError('CSV format error');
-      console.error(err);
+      console.error('CSV import error:', err);
+      setError(err instanceof Error ? err.message : 'CSV format error');
     } finally {
       setIsUploading(false);
     }
