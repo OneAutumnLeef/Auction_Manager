@@ -28,9 +28,9 @@ export const parsePlayersCSV = (file: File): Promise<Player[]> => {
                 role: roleMapping[row['Role']] || 'Batsman',
                 category: row['Category'] as Category,
                 basePrice: basePriceInRupees,
-                imageUrl: isValidImageUrl(row['Photo Link']) 
-                  ? row['Photo Link'] 
-                  : `https://source.unsplash.com/300x400/?cricket,player&${index + 1}`,
+                imageUrl: (row['Photo Link']) ,
+                  // ? row['Photo Link'] 
+                  // : `https://source.unsplash.com/300x400/?cricket,player&${index + 1}`,
                 rating: parseFloat(row['Rating']) || undefined 
               };
             });

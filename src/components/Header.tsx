@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAuthStore } from '../store/auth';
 import { LogoutButton } from './LogoutButton';
 import { Gavel } from 'lucide-react';

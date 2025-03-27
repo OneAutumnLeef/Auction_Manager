@@ -63,7 +63,7 @@ export function PlayerCard({ player, onClick, highlight = false }: PlayerCardPro
   
   // Find team details if player is sold
   const team = isSold && player.soldTo ? teams[player.soldTo] : null;
-  // console.log(player);
+  console.log(player);
   
 
   return (
@@ -106,7 +106,7 @@ export function PlayerCard({ player, onClick, highlight = false }: PlayerCardPro
       <div className="relative">
         <div className="aspect-[3/4] overflow-hidden">
           <img 
-            src={player.imageUrl || `https://source.unsplash.com/300x400/?cricket,player&${player.id}`} 
+            src={player.imageUrl} 
             alt={player.name}
             className="w-full h-full object-cover transform transition-transform duration-500 hover:scale-110"
           />

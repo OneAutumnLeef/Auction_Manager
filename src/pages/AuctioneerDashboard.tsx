@@ -15,6 +15,7 @@ import {
 import { CSVUpload } from '../components/CSVUpload';
 // import { UnsoldPlayersUpload } from '../components/UnsoldPlayersUpload';
 import { convertSoldPlayersToCSV, convertUnsoldPlayersToCSV, downloadCSV } from '../lib/csvExport';
+import { parsePlayersCSV } from '../lib/csvImport';
 
 export default function AuctioneerDashboard() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -24,11 +25,11 @@ export default function AuctioneerDashboard() {
   const [showUnsold, setShowUnsold] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
-  // const [showUnsoldUpload, setShowUnsoldUpload] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showingRestoreNotification, setShowingRestoreNotification] = useState(false);
+  const [showingDefaultDataNotification, setShowingDefaultDataNotification] = useState(false);
 
   const {
     players,
@@ -40,31 +41,59 @@ export default function AuctioneerDashboard() {
     markPlayerUnsold,
     soldPlayers,
     unsoldPlayers,
-    resetAuctionData
+    resetAuctionData,
+    setPlayers
   } = useAuctionStore();
 
   useEffect(() => {
+    const loadDefaultData = async () => {
+      try {
+        // Only load default data if no players exist yet
+        if (players.length === 3) {
+          // Fetch the CSV file
+          const response = await fetch('/Test_Cleaned_Updated.csv');
+          const csvText = await response.text();
+          
+          // Convert the text to a File object
+          const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
+          
+          // Parse the CSV file
+          const importedPlayers = await parsePlayersCSV(csvFile);
+          
+          // Set the players in the store
+          setPlayers(importedPlayers);
+          
+          // Show notification
+          setShowingDefaultDataNotification(true);
+          
+          // Hide notification after 5 seconds
+          setTimeout(() => {
+            setShowingDefaultDataNotification(false);
+          }, 5000);
+        } else {
+          // If players exist, show restore notification
+          setShowingRestoreNotification(true);
+          // Hide notification after 5 seconds
+          setTimeout(() => {
+            setShowingRestoreNotification(false);
+          }, 5000);
+        }
+      } catch (error) {
+        console.error('Failed to load default player data:', error);
+      } finally {
+        // Finish loading regardless of outcome
+        setPageLoaded(true);
+        setIsLoading(false);
+      }
+    };
+
+    // Delay for better user experience
     const timer = setTimeout(() => {
-      setPageLoaded(true);
-      setIsLoading(false);
+      loadDefaultData();
     }, 500);
     
     return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    // Check if we're loading from persisted data
-    const hasStoredData = players.length > 0;
-    
-    if (hasStoredData) {
-      setShowingRestoreNotification(true);
-      // Hide the notification after 5 seconds
-      const timer = setTimeout(() => {
-        setShowingRestoreNotification(false);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [players]);
+  }, [players.length, setPlayers]);
 
   const handleClearData = () => {
     setShowConfirmReset(true);
@@ -240,6 +269,27 @@ export default function AuctioneerDashboard() {
               </button>
             </motion.div>
           )}
+          
+          {showingDefaultDataNotification && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-4 bg-blue-900/50 text-blue-300 p-3 rounded-lg border border-blue-700/50 flex items-center"
+            >
+              <div className="p-1 bg-blue-800/50 rounded-full mr-2">
+                <Check size={16} />
+              </div>
+              <p>Loaded {players.length} players from Test_Cleaned_Updated.csv</p>
+              <button 
+                className="ml-auto text-blue-400 hover:text-white"
+                onClick={() => setShowingDefaultDataNotification(false)}
+              >
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+          
           {!isAuctionMode && (
             <>
               {/* Dashboard Header with Stats */}

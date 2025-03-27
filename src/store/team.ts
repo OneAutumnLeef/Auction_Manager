@@ -42,7 +42,7 @@ const defaultTeams: Record<string, Team> = {
   'team11': { id: 'team11', name: 'Deccan Chargers', shortName: 'DCH', budget: 1000000000, players: [], color: '#3268A5' },
   'team12': { id: 'team12', name: 'Pune Warriors India', shortName: 'PWI', budget: 1000000000, players: [], color: '#2F9BE3' },
   'team13': { id: 'team13', name: 'Kochi Tuskers Kerala', shortName: 'KTK', budget: 1000000000, players: [], color: '#FF6600' },
-  'team14': { id: 'team14', name: 'SriCity Blasters', shortName: 'SCB', budget: 100000000, players: [], color: '#E74C3C' },
+  'team14': { id: 'team14', name: 'SriCity Blasters', shortName: 'SCB', budget: 1000000000, players: [], color: '#E74C3C' },
 };
 
 export const useTeamStore = create<TeamStore>()(
