@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './store/auth';
 import { useAuctionStore } from './store/auction';
-import { samplePlayers } from './data/players';
+import { parsePlayersCSV } from './lib/csvImport';
 import Login from './pages/Login';
 import AuctioneerDashboard from './pages/AuctioneerDashboard';
 import TeamDashboard from './pages/TeamDashboard';
@@ -28,16 +28,43 @@ function App() {
   const resetAuctionData = useAuctionStore((state) => state.resetAuctionData);
   const [csvImported, setCsvImported] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if we already have players from persisted storage
-    const existingPlayers = useAuctionStore.getState().players;
+    const loadDefaultData = async () => {
+      try {
+        // Check if we already have players from persisted storage
+        const existingPlayers = useAuctionStore.getState().players;
+        
+        // Only load default data if no persisted players exist
+        if (existingPlayers.length === 0) {
+          // Load directly from the default CSV file in the project root
+          const response = await fetch('/Test_Cleaned_Updated.csv');
+          
+          if (!response.ok) {
+            console.error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
+            throw new Error('Failed to load default player data');
+          }
+          
+          const csvText = await response.text();
+          const csvFile = new File([csvText], 'Test_Cleaned_Updated.csv', { type: 'text/csv' });
+          const importedPlayers = await parsePlayersCSV(csvFile);
+          
+          setPlayers(importedPlayers);
+          setCsvImported(true);
+          console.log(`Loaded ${importedPlayers.length} players from default CSV file`);
+        }
+      } catch (error) {
+        console.error('Error loading default player data:', error);
+        // If loading fails, initialize with empty array
+        setPlayers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    // Only initialize with sample data if no persisted players AND no CSV imported
-    if (existingPlayers.length === 0 && !csvImported) {
-      setPlayers(samplePlayers);
-    }
-  }, [setPlayers, csvImported]);
+    loadDefaultData();
+  }, [setPlayers]);
 
   const handleClearData = () => {
     setShowConfirmReset(true);
@@ -48,13 +75,6 @@ function App() {
     setShowConfirmReset(false);
   };
 
-  // Add a useEffect to clear any existing user data for testing
-  // Comment this out or remove it once you're done testing
-  useEffect(() => {
-    // Uncomment the line below to force logout when testing
-    // useAuthStore.getState().logout();
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
@@ -62,82 +82,91 @@ function App() {
           <Header />
           <main className="flex-grow">
             <div className="flex-grow">
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route
-                  path="/auctioneer"
-                  element={
-                    <ProtectedRoute>
-                      <>
-                        <div className="container mx-auto pt-4">
-                          <div className="flex flex-col md:flex-row gap-4 mb-4">
-                            <div className="flex-grow">
-                              <CSVUpload onImportSuccess={() => setCsvImported(true)} />
-                            </div>
-                            <div className="flex justify-end">
-                              {showConfirmReset ? (
-                                <div className="bg-gray-800 p-4 rounded-lg flex flex-col gap-2">
-                                  <p className="text-white text-sm">This will clear all sold and unsold player data. Continue?</p>
-                                  <div className="flex gap-2">
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      onClick={() => setShowConfirmReset(false)}
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button 
-                                      variant="primary" 
-                                      size="sm" 
-                                      className="bg-red-700 hover:bg-red-800"
-                                      onClick={confirmReset}
-                                    >
-                                      Confirm Reset
-                                    </Button>
+              {isLoading ? (
+                <div className="h-screen flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="inline-block p-4 border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mb-4"></div>
+                    <p className="text-white text-lg">Loading player data...</p>
+                  </div>
+                </div>
+              ) : (
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route
+                    path="/auctioneer"
+                    element={
+                      <ProtectedRoute>
+                        <>
+                          <div className="container mx-auto pt-4">
+                            <div className="flex flex-col md:flex-row gap-4 mb-4">
+                              <div className="flex-grow">
+                                <CSVUpload onImportSuccess={() => setCsvImported(true)} />
+                              </div>
+                              <div className="flex justify-end">
+                                {showConfirmReset ? (
+                                  <div className="bg-gray-800 p-4 rounded-lg flex flex-col gap-2">
+                                    <p className="text-white text-sm">This will clear all sold and unsold player data. Continue?</p>
+                                    <div className="flex gap-2">
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => setShowConfirmReset(false)}
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button 
+                                        variant="primary" 
+                                        size="sm" 
+                                        className="bg-red-700 hover:bg-red-800"
+                                        onClick={confirmReset}
+                                      >
+                                        Confirm Reset
+                                      </Button>
+                                    </div>
                                   </div>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  onClick={handleClearData}
-                                  className="text-red-400 hover:text-red-300 hover:border-red-500"
-                                >
-                                  <RefreshCw className="mr-2" size={16} />
-                                  Clear Auction Data
-                                </Button>
-                              )}
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    onClick={handleClearData}
+                                    className="text-red-400 hover:text-red-300 hover:border-red-500"
+                                  >
+                                    <RefreshCw className="mr-2" size={16} />
+                                    Clear Auction Data
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <AuctioneerDashboard />
-                      </>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/team"
-                  element={
-                    <ProtectedRoute>
-                      <TeamDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Important: Add a more specific redirect behavior */}
-                <Route 
-                  path="/" 
-                  element={user ? (
-                    user.role === 'auctioneer' ? (
-                      <Navigate to="/auctioneer" replace />
+                          <AuctioneerDashboard />
+                        </>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/team"
+                    element={
+                      <ProtectedRoute>
+                        <TeamDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* Important: Add a more specific redirect behavior */}
+                  <Route 
+                    path="/" 
+                    element={user ? (
+                      user.role === 'auctioneer' ? (
+                        <Navigate to="/auctioneer" replace />
+                      ) : (
+                        <Navigate to="/team" replace />
+                      )
                     ) : (
-                      <Navigate to="/team" replace />
-                    )
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )} 
-                />
-                {/* Catch all other routes */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                      <Navigate to="/login" replace />
+                    )} 
+                  />
+                  {/* Catch all other routes */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              )}
             </div>
           </main>
           <Footer />
