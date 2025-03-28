@@ -4,13 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:server": "node server.js",
-    "dev:client": "vite --port 5174",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev": "vite --port 5174",
+    "dev:host": "vite --host --port 5174",
     "build": "vite build",
-    "start": "node server.js",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "server": "node server.js",
+    "preview": "vite preview --host"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.24.1",
