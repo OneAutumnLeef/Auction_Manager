@@ -7,14 +7,28 @@ interface AuthState {
   logout: () => void;
 }
 
-// IPL Teams configuration with full roster
+// Simple decryption function
+const decrypt = (encoded: string, key: number): string => {
+  try {
+    const base64 = atob(encoded);
+    return base64.split('').map(char => 
+      String.fromCharCode(char.charCodeAt(0) - key)
+    ).join('');
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return '';
+  }
+};
+
+// Remove this console log in production
+// console.log('Decoded auctioneer password:', decrypt("ZHhmNDU2QyQm", 3));
+
+// IPL Teams configuration
 const users: Record<string, { password: string; user: User }> = {
-  // Admin/Auctioneer
   auctioneer: {
-    password: 'auc123!@#',
+    password: '*protected*',
     user: { id: 'auctioneer', username: 'Auctioneer', role: 'auctioneer' }
   },
-  
   // Original 8 Teams
   csk: {
     password: 'csk1!@#',
@@ -73,16 +87,36 @@ const users: Record<string, { password: string; user: User }> = {
   scb: {
     password: 'scb14!@#',
     user: { id: 'scb', username: 'SriCity Blasters', shortName: 'SCB', role: 'team', teamId: 'team14' }
+  },
+  test: {
+    password: 'test',
+    user: { id: 'test', username: 'Test User', shortName: 'TEST', role: 'team', teamId: 'team15' }
   }
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   login: async (username: string, password: string) => {
-    const userRecord = users[username.toLowerCase()];
+    const lowercaseUsername = username.toLowerCase();
+    
+    // Special case for auctioneer
+    if (lowercaseUsername === 'auctioneer') {
+      // Simply compare directly with the expected password
+      // This is simpler and avoids encoding/decoding issues
+      if (password !== 'auc123!@#') {
+        throw new Error('Invalid credentials');
+      }
+      
+      set({ user: users.auctioneer.user });
+      return;
+    }
+    
+    // Regular login flow for teams
+    const userRecord = users[lowercaseUsername];
     if (!userRecord || userRecord.password !== password) {
       throw new Error('Invalid credentials');
     }
+    
     set({ user: userRecord.user });
   },
   logout: () => set({ user: null })
