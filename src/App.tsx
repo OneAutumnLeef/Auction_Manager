@@ -13,6 +13,7 @@ import { RefreshCw } from 'lucide-react';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { Analytics } from "@vercel/analytics/react"
+import { FirebaseInitializer } from './components/FirebaseInitializer';
 
 const queryClient = new QueryClient();
 
@@ -26,7 +27,6 @@ function App() {
   const user = useAuthStore((state) => state.user);
   const setPlayers = useAuctionStore((state) => state.setPlayers);
   const resetAuctionData = useAuctionStore((state) => state.resetAuctionData);
-  const [csvImported, setCsvImported] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,7 +61,6 @@ function App() {
               
               if (importedPlayers && importedPlayers.length > 0) {
                 setPlayers(importedPlayers);
-                setCsvImported(true);
                 console.log(`Loaded ${importedPlayers.length} players from default CSV file`);
               } else {
                 console.error("parsePlayersCSV returned empty array or null");
@@ -125,7 +124,6 @@ function App() {
             ];
             
             setPlayers(defaultPlayers);
-            setCsvImported(true);
             console.log(`Loaded ${defaultPlayers.length} players from hardcoded data`);
           }
         } else {
@@ -157,6 +155,7 @@ function App() {
       <Router>
         <div className="min-h-screen flex flex-col bg-gray-900">
           <Header />
+          <FirebaseInitializer />
           <main className="flex-grow">
             <div className="flex-grow">
               {isLoading ? (
@@ -177,7 +176,7 @@ function App() {
                           <div className="container mx-auto pt-4">
                             <div className="flex flex-col md:flex-row gap-4 mb-4">
                               <div className="flex-grow">
-                                <CSVUpload onImportSuccess={() => setCsvImported(true)} />
+                                <CSVUpload onImportSuccess={() => {/* Updated players will be handled by Firebase */}} />
                               </div>
                               <div className="flex justify-end">
                                 {showConfirmReset ? (

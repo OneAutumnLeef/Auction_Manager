@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { ref, onValue, set as firebaseSet } from 'firebase/database';
+import { database } from '../lib/firebase';
 
 export interface Team {
   id: string;
@@ -45,78 +46,101 @@ const defaultTeams: Record<string, Team> = {
   'team14': { id: 'team14', name: 'SriCity Blasters', shortName: 'SCB', budget: 1000000000, players: [], color: '#E74C3C' },
 };
 
-export const useTeamStore = create<TeamStore>()(
-  persist(
-    (set) => ({
-      teams: defaultTeams,
-      currentTeam: null,
-      
-      setTeams: (teams) => set({ teams }),
-      setCurrentTeam: (teamId) => set({ currentTeam: teamId }),
-      
-      addPlayerToTeam: (teamId, playerId, cost) => set((state) => {
-        const team = state.teams[teamId];
-        if (!team) return state;
-        
-        return { 
-          teams: {
-            ...state.teams,
-            [teamId]: {
-              ...team,
-              budget: team.budget - cost,
-              players: [...team.players, playerId]
-            }
-          }
-        };
-      }),
-      
-      removePlayerFromTeam: (teamId, playerId) => set((state) => {
-        const team = state.teams[teamId];
-        if (!team) return state;
-        
-        return { 
-          teams: {
-            ...state.teams,
-            [teamId]: {
-              ...team,
-              players: team.players.filter(id => id !== playerId)
-            }
-          }
-        };
-      }),
-      
-      updateTeamBudget: (teamId, newBudget) => set((state) => {
-        const team = state.teams[teamId];
-        if (!team) return state;
-        
-        return { 
-          teams: {
-            ...state.teams,
-            [teamId]: {
-              ...team,
-              budget: newBudget
-            }
-          }
-        };
-      }),
-      
-      // Add resetAllTeamBudgets function
-      resetAllTeamBudgets: (newBudget) => set((state) => {
-        const updatedTeams: Record<string, Team> = {};
-        
-        // For each team, reset the budget
-        Object.keys(state.teams).forEach(teamId => {
-          updatedTeams[teamId] = {
-            ...state.teams[teamId],
-            budget: newBudget !== undefined ? newBudget : defaultTeams[teamId].budget
-          };
-        });
-        
-        return { teams: updatedTeams };
-      }),
-    }),
-    {
-      name: 'team-storage',
+export const useTeamStore = create<TeamStore>()((set, get) => {
+  // Set up Firebase listener for teams
+  const teamsRef = ref(database, 'teams');
+  onValue(teamsRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      const currentState = get();
+      if (JSON.stringify(data) !== JSON.stringify(currentState.teams)) {
+        set({ teams: data });
+      }
     }
-  )
-);
+  });
+
+  return {
+    teams: defaultTeams,
+    currentTeam: null,
+    
+    setTeams: (teams) => {
+      set({ teams });
+      firebaseSet(ref(database, 'teams'), teams);
+    },
+    
+    setCurrentTeam: (teamId) => set({ currentTeam: teamId }),
+    
+    addPlayerToTeam: (teamId, playerId, cost) => set((state) => {
+      const team = state.teams[teamId];
+      if (!team) return state;
+      
+      const updatedTeams = {
+        ...state.teams,
+        [teamId]: {
+          ...team,
+          budget: team.budget - cost,
+          players: [...team.players, playerId]
+        }
+      };
+      
+      // Update Firebase
+      firebaseSet(ref(database, 'teams'), updatedTeams);
+      
+      return { teams: updatedTeams };
+    }),
+    
+    removePlayerFromTeam: (teamId, playerId) => set((state) => {
+      const team = state.teams[teamId];
+      if (!team) return state;
+      
+      const updatedTeams = {
+        ...state.teams,
+        [teamId]: {
+          ...team,
+          players: team.players.filter(id => id !== playerId)
+        }
+      };
+      
+      // Update Firebase
+      firebaseSet(ref(database, 'teams'), updatedTeams);
+      
+      return { teams: updatedTeams };
+    }),
+    
+    updateTeamBudget: (teamId, newBudget) => set((state) => {
+      const team = state.teams[teamId];
+      if (!team) return state;
+      
+      const updatedTeams = {
+        ...state.teams,
+        [teamId]: {
+          ...team,
+          budget: newBudget
+        }
+      };
+      
+      // Update Firebase
+      firebaseSet(ref(database, 'teams'), updatedTeams);
+      
+      return { teams: updatedTeams };
+    }),
+    
+    // Add resetAllTeamBudgets function
+    resetAllTeamBudgets: (newBudget) => set((state) => {
+      const updatedTeams: Record<string, Team> = {};
+      
+      // For each team, reset the budget
+      Object.keys(state.teams).forEach(teamId => {
+        updatedTeams[teamId] = {
+          ...state.teams[teamId],
+          budget: newBudget !== undefined ? newBudget : defaultTeams[teamId].budget
+        };
+      });
+      
+      // Update Firebase
+      firebaseSet(ref(database, 'teams'), updatedTeams);
+      
+      return { teams: updatedTeams };
+    }),
+  };
+});
